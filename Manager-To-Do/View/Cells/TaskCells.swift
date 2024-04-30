@@ -8,7 +8,9 @@
 import UIKit
 
 class TaskCells: UITableViewCell {
-
+    @IBOutlet var symbol: UILabel!
+    @IBOutlet var title: UILabel!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
