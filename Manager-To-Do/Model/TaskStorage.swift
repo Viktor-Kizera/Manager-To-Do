@@ -22,7 +22,8 @@ class TasksStorage: TasksStorageProtocol {
     Task(title: "Купить новый пылесос", type: .normal, status:
     .completed),
     Task(title: "Подарить цветы супруге", type: .important, status:
-    .planned), Task(title: "Позвонить родителям", type: .important, status: .planned)]
+    .planned), Task(title: "Позвонить родителям", type: .important, status: .planned),
+    Task(title: "Садок вишневий коло хати, хрущі над вишнями гудуть, плягатарі з плугами йдуть, співають ідучи дівчата, а матері вечерять ждуть", type: .important, status: .planned)]
         return testTasks
     }
      func saveTasks(_ tasks: [TaskProtocol]) {}

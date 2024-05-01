@@ -14,6 +14,7 @@ class TaskListController: UITableViewController {
     // порядок отображения секций по типам
     // индекс в массиве соответствует индексу секции в таблице
     var sectionsTypesPosition: [TaskPriority] = [.important, .normal]
+    var tasksStatusPosition: [TaskStatus] = [.planned, .completed]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,9 +23,18 @@ class TaskListController: UITableViewController {
    private func loadTasks() {
        sectionsTypesPosition.forEach { taskType in tasks[taskType] = []
        }
-       // загрузка и разбор задач из хранилища tasksStorage.loadTasks().forEach { task in
+       // загрузка и разбор задач из хранилища
        tasksStorage.loadTasks().forEach { task in
        tasks[task.type]?.append(task) }
+       // сортування списка задач
+       for (taskGroupPriority, taskGroup) in tasks {
+           tasks[taskGroupPriority] = taskGroup.sorted {
+               task1, task2 in
+               let task1position = tasksStatusPosition.firstIndex(of: task1.status) ?? 0
+               let task2position = tasksStatusPosition.firstIndex(of:  task2.status) ?? 0
+               return task1position < task2position
+           }
+       }
     }
     // MARK: - Table view data source
 
@@ -43,7 +53,20 @@ class TaskListController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        return getConfiguredTaskCell_constraints(for: indexPath)
+        // ячейка на основі констрейнтів
+//        return getConfiguredTaskCell_constraints(for: indexPath)
+        // ячейка на основі стеку
+        return getConfiguredTaskCell_stack(for: indexPath)
+    }
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        var title: String?
+        let tasksType = sectionsTypesPosition[section]
+            if tasksType == .important {
+                title = "Важливі"
+            } else if tasksType == .normal{
+                title = "Поточні"
+            }
+        return title
     }
     
     private func getConfiguredTaskCell_constraints(for indexPath: IndexPath) -> UITableViewCell {
@@ -82,5 +105,45 @@ class TaskListController: UITableViewController {
         } else {
             resultSymbol = "" }
         return resultSymbol
+    }
+    private func getConfiguredTaskCell_stack (for indexPath: IndexPath) -> UITableViewCell {
+        // загружаємо прототип ячейки
+        let cell = tableView.dequeueReusableCell(withIdentifier: "taskCellStack", for: indexPath) as! TaskCells
+        // отримуємо дані про задачу, які необхідно вивести в ячейку
+        let taskType = sectionsTypesPosition[indexPath.section]
+        guard let currentTask = tasks[taskType]?[indexPath.row] else {
+            return cell
+        }
+        // змінюємо текст в ячейці
+        cell.title.text = currentTask.title
+        // змінюмо символ в ячейці
+        cell.symbol.text = getSymbolForTask(with: currentTask.status)
+        
+        // змінюємо колір тексту
+        if currentTask.status == .planned {
+            cell.title.textColor = .black
+            cell.symbol.textColor = .black
+        } else if currentTask.status == .completed {
+            cell.title.textColor = .lightGray
+            cell.symbol.textColor = .lightGray
+        }
+        return cell
+    }
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // провіряємо на існування дану задачу
+        let taskType = sectionsTypesPosition[indexPath.section]
+        guard let _ = tasks[taskType]?[indexPath.row] else {
+            return
+        }
+        // впенюємося що задача не являється виконаною
+        guard tasks[taskType]![indexPath.row].status == .planned else {
+            // знімаємо виділення з рядка
+            tableView.deselectRow(at: indexPath, animated: true)
+            return
+        }
+        // відмічаємо задачу як виконану
+        tasks[taskType]![indexPath.row].status = .completed
+        // перегружаємо секцію таблиці
+        tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section), with: .automatic)
     }
 }

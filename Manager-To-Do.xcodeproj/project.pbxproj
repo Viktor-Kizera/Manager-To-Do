@@ -64,13 +64,13 @@
 			children = (
 				686B90F32BE14C6300EB2449 /* Model */,
 				686B90ED2BE146CB00EB2449 /* View */,
+				686B90F12BE148C600EB2449 /* TaskListController.swift */,
 				686B90D92BE142CC00EB2449 /* AppDelegate.swift */,
 				686B90DB2BE142CC00EB2449 /* SceneDelegate.swift */,
 				686B90DF2BE142CC00EB2449 /* Main.storyboard */,
 				686B90E22BE142CE00EB2449 /* Assets.xcassets */,
 				686B90E42BE142CE00EB2449 /* LaunchScreen.storyboard */,
 				686B90E72BE142CE00EB2449 /* Info.plist */,
-				686B90F12BE148C600EB2449 /* TaskListController.swift */,
 			);
 			path = "Manager-To-Do";
 			sourceTree = "<group>";
