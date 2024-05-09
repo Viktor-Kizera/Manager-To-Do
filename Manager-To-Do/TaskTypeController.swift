@@ -8,38 +8,53 @@
 import UIKit
 
 class TaskTypeController: UITableViewController {
-
+    // 1. кортеж, що описує тип задачі
+    typealias TypeCellDescription = (type: TaskPriority, title: String, description: String)
+    // 2. колекція доступних типів задач з їх описом
+    private var taskTypesInformation: [TypeCellDescription] = [(type: .important, title: "Важливе", description: "Такий тип задачі,є найбільш пріорітетним для виконання. Всі важливі дії виводяться в перших рядках таблиці"),
+      (type: .normal, title: "Поточні", description: "Задача зі звичайним пріорітетом")]
+    // 3. вибраний пріорітет
+    var selectedType: TaskPriority = .normal
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+    // 1. получаємо значення типу UINib, відповідно до xib-файлу кастомної ячейки
+    let cellTypeNib = UINib(nibName: "TaskTypeCell", bundle: nil)
+    // 2. реєстрація кастомної ячейки в табличному представленні
+        tableView.register(cellTypeNib, forCellReuseIdentifier: "TaskTypeCell")
     }
 
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-        return 0
+        return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return 0
+        return taskTypesInformation.count
     }
 
-    /*
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
+        // 1. Получаємо перевикористовування кастомної ячейки за її ідентифікатором
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskTypeCell", for: indexPath) as! TaskTypeCell
 
-        // Configure the cell...
-
+        // 2. Получаємо тимчасовий елемент, інформація про якого повинна бути виведена в рядку
+        let typeDescription = taskTypesInformation[indexPath.row]
+        
+        // 3. Заповнюємо ячейку даними
+        cell.typeTitle.text = typeDescription.title
+        cell.typeDescription.text = typeDescription.description
+        // 4. Якщо тип вибраний, то відмічаємо галочкою
+        if selectedType == typeDescription.type {
+            cell.accessoryType = .checkmark
+        // в іншому випадку знімаємо галочку
+        } else {
+            cell.accessoryType = .none
+        }
         return cell
     }
-    */
 
     /*
     // Override to support conditional editing of the table view.

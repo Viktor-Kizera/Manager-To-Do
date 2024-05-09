@@ -10,7 +10,19 @@ import UIKit
 class TaskListController: UITableViewController {
     // хранилище задач
     var tasksStorage: TasksStorageProtocol = TasksStorage() // коллекция задач
-    var tasks: [TaskPriority:[TaskProtocol]] = [:]
+    var tasks: [TaskPriority:[TaskProtocol]] = [:] {
+        didSet {
+             // сортування списка задач
+            for (taskGroupPriority, taskGroup) in tasks {
+                tasks[taskGroupPriority] = taskGroup.sorted {
+                    task1, task2 in
+            let task1position = tasksStatusPosition.firstIndex(of: task1.status) ?? 0
+            let task2position = tasksStatusPosition.firstIndex(of:  task2.status) ?? 0
+            return task1position < task2position
+                }
+            }
+        }
+    }
     // порядок отображения секций по типам
     // индекс в массиве соответствует индексу секции в таблице
     var sectionsTypesPosition: [TaskPriority] = [.important, .normal]
@@ -18,7 +30,10 @@ class TaskListController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // загружаємо задачі
         loadTasks()
+        // кнопка активації режиму редагування
+        navigationItem.leftBarButtonItem = editButtonItem
     }
    private func loadTasks() {
        sectionsTypesPosition.forEach { taskType in tasks[taskType] = []
@@ -26,18 +41,35 @@ class TaskListController: UITableViewController {
        // загрузка и разбор задач из хранилища
        tasksStorage.loadTasks().forEach { task in
        tasks[task.type]?.append(task) }
-       // сортування списка задач
-       for (taskGroupPriority, taskGroup) in tasks {
-           tasks[taskGroupPriority] = taskGroup.sorted {
-               task1, task2 in
-               let task1position = tasksStatusPosition.firstIndex(of: task1.status) ?? 0
-               let task2position = tasksStatusPosition.firstIndex(of:  task2.status) ?? 0
-               return task1position < task2position
-           }
-       }
+    }
+    override func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        // секція з якої відбувається переміщення
+        let taskTypeFrom = sectionsTypesPosition[sourceIndexPath.section]
+        // секція в яку відбудеться переміщення
+        let taskTypeTo = sectionsTypesPosition[destinationIndexPath.section]
+        // безпечно витягуємо задачу, тим самим копіюємо її
+        guard let movedTask = tasks[taskTypeFrom]?[sourceIndexPath.row] else {
+            return
+        }
+        // видаляємо задачу з того місця, звідки вона була перетягнута
+        tasks[taskTypeFrom]!.remove(at: sourceIndexPath.row)
+        // встановлюємо задачу в нову позицію (нове місце)
+        tasks[taskTypeTo]?.insert(movedTask, at: destinationIndexPath.row)
+        // якщо секція змінилася, то змінюємо тип задачі відповідно новій позиції
+        if taskTypeFrom != taskTypeTo {
+            tasks[taskTypeTo]![destinationIndexPath.row].type = taskTypeTo
+        }
+        // оновляємо всі таблицю (дані)
+        tableView.reloadData()
     }
     // MARK: - Table view data source
-
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        let taskType = sectionsTypesPosition[indexPath.section]
+        // видаляємо задачу
+        tasks[taskType]?.remove(at: indexPath.row)
+        // видаляємо рядок, який відповідає задачі
+        tableView.deleteRows(at: [indexPath], with: .automatic)
+    }
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
         return tasks.count
@@ -146,4 +178,22 @@ class TaskListController: UITableViewController {
         // перегружаємо секцію таблиці
         tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section), with: .automatic)
     }
+    override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        // отримуємо дані про задачу яку потрібно перевести в "заплановану"
+        let taskType = sectionsTypesPosition[indexPath.section]
+        guard let _ = tasks[taskType]?[indexPath.row] else {
+            return nil
+        }
+        // провіряємо чи задача має статус "виконана"
+        guard tasks[taskType]![indexPath.row].status == .completed else {
+            return nil
+        }
+        // створюємо дію для зміни статуса
+        let actionSwipeInstance = UIContextualAction(style: .normal, title: "Не виконана") { _,_,_ in
+            self.tasks[taskType]![indexPath.row].status = .planned
+            self.tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section), with: .automatic)
+        }
+        return UISwipeActionsConfiguration(actions: [actionSwipeInstance])
+    }
+  
 }
