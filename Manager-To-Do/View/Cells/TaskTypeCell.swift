@@ -1,13 +1,13 @@
 //
-//  TaskTypeCellTableViewCell.swift
+//  TaskTypeCell.swift
 //  Manager-To-Do
 //
-//  Created by Viktor Kizera on 08.05.2024.
+//  Created by Viktor Kizera on 09.05.2024.
 //
 
 import UIKit
 
-class TaskTypeCellTableViewCell: UITableViewCell {
+class TaskTypeCell: UITableViewCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
