@@ -35,6 +35,16 @@ class TaskListController: UITableViewController {
         // кнопка активації режиму редагування
         navigationItem.leftBarButtonItem = editButtonItem
     }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "toCreateScreen" {
+            let destination = segue.destination as! TaskEditController
+            destination.doAfterEdit = { [unowned self] title, type, status in
+                let newTask = Task(title: title, type: type, status: status)
+                tasks[type]?.append(newTask)
+                tableView.reloadData()
+            }
+        }
+    }
    private func loadTasks() {
        sectionsTypesPosition.forEach { taskType in tasks[taskType] = []
        }
@@ -185,15 +195,50 @@ class TaskListController: UITableViewController {
             return nil
         }
         // провіряємо чи задача має статус "виконана"
-        guard tasks[taskType]![indexPath.row].status == .completed else {
-            return nil
-        }
+//        guard tasks[taskType]![indexPath.row].status == .completed else {
+//            return nil
+//        }
         // створюємо дію для зміни статуса
-        let actionSwipeInstance = UIContextualAction(style: .normal, title: "Не виконана") { _,_,_ in
+//        let actionSwipeInstance = UIContextualAction(style: .normal, title: "Не виконана") { _,_,_ in
+//            self.tasks[taskType]![indexPath.row].status = .planned
+//            self.tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section), with: .automatic)
+//        }
+//        return UISwipeActionsConfiguration(actions: [actionSwipeInstance])
+        
+        // дії для зміни статусу задачі на "запланована"
+        let actionSwipeInstanse = UIContextualAction(style: .normal, title: "НЕ виконана") { _,_,_ in
             self.tasks[taskType]![indexPath.row].status = .planned
             self.tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section), with: .automatic)
         }
-        return UISwipeActionsConfiguration(actions: [actionSwipeInstance])
+        // дії для переходу в екран редагування
+        let actionEditInstanse = UIContextualAction(style: .normal, title: "Редагувати") { _, _, _ in
+            // загрузка сцени зі Storyboard
+            let editScreen = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "TaskEditController") as! TaskEditController
+            // передача значень редагуємій задачі
+            editScreen.taskText = self.tasks[taskType]![indexPath.row].title
+            editScreen.taskType = self.tasks[taskType]![indexPath.row].type
+            editScreen.taskStatus = self.tasks[taskType]![indexPath.row].status
+            // передача обробнику для зберігання задачі
+            editScreen.doAfterEdit = { [unowned self] title, type, status in
+                let editTask = Task(title: title, type: type, status: status)
+                tasks[taskType]![indexPath.row] = editTask
+                tableView.reloadData()
+            }
+            // перехід до екрану редагування
+            self.navigationController?.pushViewController(editScreen, animated: true)
+        }
+        // змінюємо колір фону кнопки дії
+        actionEditInstanse.backgroundColor = .darkGray
+        
+        // створюємо обʼєкт, який описує доступні дії
+        // в залежності від стану задачі буде відображено 1 або 2 дії
+        let actionsConfiguration: UISwipeActionsConfiguration
+        if tasks[taskType]![indexPath.row].status == .completed {
+            actionsConfiguration = UISwipeActionsConfiguration(actions: [actionSwipeInstanse,actionEditInstanse])
+        } else {
+            actionsConfiguration = UISwipeActionsConfiguration(actions: [actionEditInstanse])
+        }
+        return actionsConfiguration
     }
   
 }

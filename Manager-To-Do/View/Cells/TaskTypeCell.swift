@@ -6,7 +6,7 @@
 //
 
 import UIKit
-
+//
 class TaskTypeCell: UITableViewCell {
     @IBOutlet var typeTitle: UILabel!
     @IBOutlet var typeDescription: UILabel!
